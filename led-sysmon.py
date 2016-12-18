@@ -42,7 +42,6 @@ def send_data():
         try:
             ser.write(chr(cpu) + chr(ram))
             #print(ord(ser.read(1)))
-            ser.read(1)
         except SerialException:
             print("Lost Connection.")
             ser.close()
