@@ -35,6 +35,16 @@ Adafruit_TLC5947 tlc = Adafruit_TLC5947(NUM_TLC5974, clock, data, latch);
 // Init loop index only once.
 byte i;
 
+// State Management
+enum states {
+  START,
+  CONNECT,
+  RUN,
+  DISCONNECT,
+  SLEEP
+};
+states state = START;
+
 // TLC Pins for CPU display in low to high order.
 const byte pinsCPU[] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
 // TLC Pins for RAM display in low to high order.
@@ -74,7 +84,24 @@ void setup() {
 }
 
 void loop() {
+  cleanFrames();
+
+  // If serial is connected.
+  if(Serial) {
+    if (state != RUN) {
+      state = CONNECT;
+    }
+  }
+  else {
+    // Serial not connected.
+    if (state == CONNECT || state == RUN) {
+      state = DISCONNECT;
+    }
+  }
+
+  // If Serial data available.
   if (Serial.available()) {
+    state = RUN;
     inCPU = Serial.read();
     inRAM = Serial.read();
   }
@@ -82,12 +109,29 @@ void loop() {
   // Calculate time since last frame.
   currentMillis = millis();
   frameMillis = currentMillis - lastMillis;
- 
+
   calcPulse();
-  cleanFrames();
-  drawCPU(inCPU);
-  drawRAM(inRAM);
-  //drawPulse();
+
+  // Draw frames depending on system state.
+  switch (state) {
+    case START:
+      drawSleep();
+      break;
+    case CONNECT:
+      drawConnect();
+      break;
+    case RUN:
+      drawCPU(inCPU);
+      drawRAM(inRAM);
+      break;
+    case DISCONNECT:
+      drawDisconnect();
+      break;
+    case SLEEP:
+      drawSleep();
+      break;
+  }
+
   writeFrames();
 
   // Update lastMillis.
@@ -112,6 +156,7 @@ void calcPulse() {
   pulse = abs(rangePulse - paddedPulseBright) / mathPadding;
 }
 
+
 void cleanFrames() {
   for (i = 0; i < 10; i++) {
     frameCPU[i] = 0;
@@ -127,7 +172,9 @@ void writeFrames() {
   tlc.write();
 }
 
-void drawCPU(uint8_t percent) {
+// Draw Functions
+
+void drawCPU(byte percent) {
   const byte litLEDs = percent / 10;
   const byte remainder = percent % 10;
 
@@ -143,7 +190,7 @@ void drawCPU(uint8_t percent) {
   }
 }
 
-void drawRAM(uint8_t percent) {
+void drawRAM(byte percent) {
   const byte litLEDs = percent / 10;
   const byte remainder = percent % 10;
 
@@ -157,6 +204,28 @@ void drawRAM(uint8_t percent) {
       frameRAM[i] += maxBright * remainder / 10;
     }
   }
+}
+
+// Draw "sleep" by pulsing the blue LEDs.
+void drawSleep() {
+  frameCPU[0] += pulse;
+  frameRAM[0] += pulse;
+}
+
+// Draw "connect" by pulsing two green LEDs.
+void drawConnect() {
+  frameCPU[1] += pulse;
+  frameCPU[2] += pulse;
+  frameRAM[1] += pulse;
+  frameRAM[2] += pulse;
+}
+
+// Draw "connect" by pulsing two red LEDs.
+void drawDisconnect() {
+  frameCPU[8] += pulse;
+  frameCPU[9] += pulse;
+  frameRAM[8] += pulse;
+  frameRAM[9] += pulse;
 }
 
 void drawPulse() {
