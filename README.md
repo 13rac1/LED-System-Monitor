@@ -22,4 +22,3 @@ Required Python libraries:
 
 Todo:
 * Third bar graph for GPU or ???
-* No Serial connection animation

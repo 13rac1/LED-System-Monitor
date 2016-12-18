@@ -40,13 +40,16 @@ unsigned long lastMillis = 0;
 unsigned long currentMillis = 0;
 unsigned long frameMillis = 0;
 
+// Time since event timers.
 unsigned long disconnectStartMillis = 0;
+unsigned long lastDataMillis = 0;
 
 // State Management
 enum states {
   START,
   CONNECT,
   RUN,
+  NODATA,
   DISCONNECT,
   SLEEP
 };
@@ -96,13 +99,13 @@ void loop() {
 
   // If serial is connected.
   if(Serial) {
-    if (state != RUN) {
+    if (state == START) {
       state = CONNECT;
     }
   }
   else {
     // Serial not connected.
-    if (state == CONNECT || state == RUN) {
+    if (state == CONNECT || state == RUN || state == NODATA) {
       state = DISCONNECT;
       disconnectStartMillis = currentMillis;
     }
@@ -110,9 +113,19 @@ void loop() {
 
   // If Serial data available.
   if (Serial.available()) {
-    state = RUN;
+    // TODO: Care about two reads?
     inCPU = Serial.read();
     inRAM = Serial.read();
+    state = RUN;
+    lastDataMillis = currentMillis;
+  }
+
+  // Show warning after one second of no data.
+  if (state == RUN) {
+    bool noDataLimit = currentMillis - lastDataMillis > 1000;
+    if (noDataLimit) {
+      state = NODATA;
+    }
   }
 
   // Only display disconnect for 5 seconds.
@@ -134,6 +147,9 @@ void loop() {
     case RUN:
       drawCPU(inCPU);
       drawRAM(inRAM);
+      break;
+    case NODATA:
+      drawWarning();
       break;
     case DISCONNECT:
       drawDisconnect();
@@ -237,6 +253,14 @@ void drawDisconnect() {
   frameCPU[9] += pulse;
   frameRAM[8] += pulse;
   frameRAM[9] += pulse;
+}
+
+// Draw "warning" by pulsing two yellow LEDs.
+void drawWarning() {
+  frameCPU[6] += pulse;
+  frameCPU[7] += pulse;
+  frameRAM[6] += pulse;
+  frameRAM[7] += pulse;
 }
 
 void drawPulse() {
