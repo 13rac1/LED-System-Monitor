@@ -35,6 +35,13 @@ Adafruit_TLC5947 tlc = Adafruit_TLC5947(NUM_TLC5974, clock, data, latch);
 // Init loop index only once.
 byte i;
 
+// Store last and current frame times to find frame interval.
+unsigned long lastMillis = 0;
+unsigned long currentMillis = 0;
+unsigned long frameMillis = 0;
+
+unsigned long disconnectStartMillis = 0;
+
 // State Management
 enum states {
   START,
@@ -57,11 +64,6 @@ int frameRAM[10];
 
 // A heartbeat from 0 to maxBright running at pulseBPM.
 int pulse = 0;
-
-// Store last and current frame times to find frame interval.
-unsigned long lastMillis = 0;
-unsigned long currentMillis = 0;
-unsigned long frameMillis = 0;
 
 // Store the CPU read byte.
 byte inCPU = 1;
@@ -86,6 +88,12 @@ void setup() {
 void loop() {
   cleanFrames();
 
+  // Calculate time since last frame.
+  currentMillis = millis();
+  frameMillis = currentMillis - lastMillis;
+
+  calcPulse();
+
   // If serial is connected.
   if(Serial) {
     if (state != RUN) {
@@ -96,6 +104,7 @@ void loop() {
     // Serial not connected.
     if (state == CONNECT || state == RUN) {
       state = DISCONNECT;
+      disconnectStartMillis = currentMillis;
     }
   }
 
@@ -106,11 +115,13 @@ void loop() {
     inRAM = Serial.read();
   }
 
-  // Calculate time since last frame.
-  currentMillis = millis();
-  frameMillis = currentMillis - lastMillis;
-
-  calcPulse();
+  // Only display disconnect for 5 seconds.
+  if (state == DISCONNECT) {
+    bool disconnectLimit = currentMillis - disconnectStartMillis > 5000;
+    if (disconnectLimit) {
+      state = SLEEP;
+    }
+  }
 
   // Draw frames depending on system state.
   switch (state) {
@@ -220,7 +231,7 @@ void drawConnect() {
   frameRAM[2] += pulse;
 }
 
-// Draw "connect" by pulsing two red LEDs.
+// Draw "disconnect" by pulsing two red LEDs.
 void drawDisconnect() {
   frameCPU[8] += pulse;
   frameCPU[9] += pulse;
