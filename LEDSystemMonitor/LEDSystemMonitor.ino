@@ -99,7 +99,7 @@ void loop() {
 
   // If serial is connected.
   if(Serial) {
-    if (state == START) {
+    if (state == START || state == SLEEP) {
       state = CONNECT;
     }
   }
@@ -139,7 +139,7 @@ void loop() {
   // Draw frames depending on system state.
   switch (state) {
     case START:
-      drawSleep();
+      drawPulse();
       break;
     case CONNECT:
       drawConnect();
@@ -265,6 +265,7 @@ void drawWarning() {
 
 void drawPulse() {
   for (i=0; i<10; i++) {
+    frameCPU[i] += pulse;
     frameRAM[i] += pulse;
   }
 }

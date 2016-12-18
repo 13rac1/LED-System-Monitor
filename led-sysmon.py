@@ -40,6 +40,8 @@ def send_data():
         ram = int(psutil.virtual_memory().percent)
 
         try:
+            # Uncomment to test connect/nodata states.
+            # time.sleep(2)
             ser.write(chr(cpu) + chr(ram))
             #print(ord(ser.read(1)))
         except SerialException:
