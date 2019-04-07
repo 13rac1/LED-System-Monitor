@@ -44,9 +44,10 @@ unsigned long frameMillis = 0;
 // Time since event timers.
 unsigned long disconnectStartMillis = 0;
 unsigned long lastDataMillis = 0;
+unsigned long startStartMillis = 0;
 
 // State Management
-enum states { START, CONNECT, RUN, NODATA, DISCONNECT, SLEEP };
+enum states { START, CONNECT, RUN, NODATA, DISCONNECT, SLEEP, NIGHT };
 states state = START;
 
 // TLC Pins for CPU display in low to high order.
@@ -93,7 +94,7 @@ void loop() {
 
   // If serial is connected.
   if (Serial) {
-    if (state == START || state == SLEEP) {
+    if (state == START || state == SLEEP || state == NIGHT) {
       state = CONNECT;
     }
   } else {
@@ -126,6 +127,15 @@ void loop() {
     bool disconnectLimit = currentMillis - disconnectStartMillis > 5000;
     if (disconnectLimit) {
       state = SLEEP;
+      startStartMillis = currentMillis;
+    }
+  }
+
+  // Only display sleep for 15 seconds.
+  if (state == SLEEP) {
+    bool sleepLimit = currentMillis - startStartMillis > 15000;
+    if (sleepLimit) {
+      state = NIGHT;
     }
   }
 
@@ -149,6 +159,9 @@ void loop() {
       break;
     case SLEEP:
       drawSleep();
+      break;
+    case NIGHT:
+      drawNight();
       break;
   }
 
@@ -221,6 +234,11 @@ void drawRAM(byte percent) {
       frameRAM[i] += maxBright * remainder / 10;
     }
   }
+}
+
+void drawNight() {
+  frameCPU[0] += pulse / 10;
+  frameRAM[0] += pulse / 10;
 }
 
 // Draw "sleep" by pulsing the blue LEDs.
