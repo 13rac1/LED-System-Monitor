@@ -1,8 +1,9 @@
 /*
   LED System Monitor
-  2016 Brad Erickson eosrei.net
+  2016 Brad Erickson
 
-  Waits for two bytes on the serial port, then outputs to a TLC5947 to control two 10 LED bargraphs.
+  Waits for two bytes on the serial port, then outputs to a TLC5947 to control
+  two 10 LED bargraphs.
 
   Reduce CPU speed of Teensy to save power.
   https://www.pjrc.com/teensy/low_power.html
@@ -11,13 +12,13 @@
 #include "Adafruit_TLC5947.h"
 #define NUM_TLC5974 1
 
-#define data       13
-#define clock      22
-#define latch      23
+#define data 13
+#define clock 22
+#define latch 23
 
-#define maxBright  512
+#define maxBright 512
 
-#define pulseBPM   10
+#define pulseBPM 10
 #define pulseBright 64
 
 #define millisPerMinute 60000
@@ -45,14 +46,7 @@ unsigned long disconnectStartMillis = 0;
 unsigned long lastDataMillis = 0;
 
 // State Management
-enum states {
-  START,
-  CONNECT,
-  RUN,
-  NODATA,
-  DISCONNECT,
-  SLEEP
-};
+enum states { START, CONNECT, RUN, NODATA, DISCONNECT, SLEEP };
 states state = START;
 
 // TLC Pins for CPU display in low to high order.
@@ -75,7 +69,7 @@ byte inRAM = 1;
 
 void setup() {
   // Set all pins to ouput to save power.
-  for(i=0; i<pinCount; i++) {
+  for (i = 0; i < pinCount; i++) {
     pinMode(i, OUTPUT);
   }
   // Shut off ADC to save power.
@@ -98,12 +92,11 @@ void loop() {
   calcPulse();
 
   // If serial is connected.
-  if(Serial) {
+  if (Serial) {
     if (state == START || state == SLEEP) {
       state = CONNECT;
     }
-  }
-  else {
+  } else {
     // Serial not connected.
     if (state == CONNECT || state == RUN || state == NODATA) {
       state = DISCONNECT;
@@ -183,7 +176,6 @@ void calcPulse() {
   pulse = abs(rangePulse - paddedPulseBright) / mathPadding;
 }
 
-
 void cleanFrames() {
   for (i = 0; i < 10; i++) {
     frameCPU[i] = 0;
@@ -208,8 +200,7 @@ void drawCPU(byte percent) {
   for (i = 0; i < 10; i++) {
     if (i < litLEDs) {
       frameCPU[i] += 1 + pulse;
-    }
-    else if (i == litLEDs) {
+    } else if (i == litLEDs) {
       // Calculate how bright to make the highest LED
       // TODO: Gamma?
       frameCPU[i] += maxBright * remainder / 10;
@@ -224,8 +215,7 @@ void drawRAM(byte percent) {
   for (i = 0; i < 10; i++) {
     if (i < litLEDs) {
       frameRAM[i] += 1 + pulse;
-    }
-    else if (i == litLEDs) {
+    } else if (i == litLEDs) {
       // Calculate how bright to make the highest LED
       // TODO: Gamma?
       frameRAM[i] += maxBright * remainder / 10;
@@ -264,9 +254,8 @@ void drawWarning() {
 }
 
 void drawPulse() {
-  for (i=0; i<10; i++) {
+  for (i = 0; i < 10; i++) {
     frameCPU[i] += pulse;
     frameRAM[i] += pulse;
   }
 }
-
