@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys, serial
 import psutil
 import time
@@ -35,14 +36,14 @@ def send_data():
         return
 
     while True:
-
         cpu = int(psutil.cpu_percent())
         ram = int(psutil.virtual_memory().percent)
+        out = bytes(bytearray([cpu, ram]))
 
         try:
             # Uncomment to test connect/nodata states.
             # time.sleep(2)
-            ser.write(chr(cpu) + chr(ram))
+            ser.write(out)
             #print(ord(ser.read(1)))
         except SerialException:
             print("Lost Connection.")
@@ -57,4 +58,3 @@ def main():
 
 if __name__ == "__main__":
 	main()
-
