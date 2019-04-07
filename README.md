@@ -3,13 +3,15 @@
 Percent of CPU and RAM usage sent to a Teensy over USB controlling a TLC5947
 connected to two 10 LED bar graphs.
 
-Tested on Ubuntu 16.04 and Windows 10.
+Tested on Ubuntu 18.04 and Windows 10.
 
 Notes:
+
 * The output is drawn to frame buffers to allow for multiple animations.
 * A pulse value range is calculated per frame in BPM.
 
 Parts:
+
 * Teensy 2.0: https://www.pjrc.com/store/teensy.html
 * Adafruit 24-Channel 12-bit PWM LED Driver TLC5947: https://www.adafruit.com/products/1429
 * 10 Segment Light Bar Graph LED Displays: 1 Blue, 4 Green, 3 Orange, and 2 Red.
@@ -17,8 +19,16 @@ Parts:
 * Wiring
 
 Required Python libraries:
+
 * pyserial
 * psutil
 
+Install using the `requirements.txt` or with package manager. Ubuntu 18.08 packages:
+
+```bash
+sudo apt install python3-serial python3-psutil
+```
+
 Todo:
+
 * Third bar graph for GPU or ???
